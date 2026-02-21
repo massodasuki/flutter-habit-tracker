@@ -428,73 +428,114 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
                     final streak = _getStreak(habit);
                     final habitColor = Color(habit.color);
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: InkWell(
-                        onTap: () => _toggleHabit(habit),
-                        onLongPress: () => _deleteHabit(habit),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: habitColor.withValues(alpha: 0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  isCompleted ? Icons.check : Icons.circle_outlined,
-                                  color: habitColor,
-                                  size: 28,
-                                ),
+                    return Dismissible(
+                      key: Key(habit.id.toString()),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      onDismissed: (direction) async {
+                        final habitName = habit.name;
+                        final deletedHabit = habit;
+                        
+                        if (habit.id != null) {
+                          await _dbHelper.deleteHabit(habit.id!);
+                        }
+                        
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('"$habitName" deleted'),
+                              action: SnackBarAction(
+                                label: 'Undo',
+                                onPressed: () async {
+                                  await _dbHelper.createHabit(deletedHabit);
+                                  _loadData();
+                                },
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      habit.name,
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        decoration: isCompleted
-                                            ? TextDecoration.lineThrough
-                                            : null,
+                            ),
+                          );
+                          _loadData();
+                        }
+                      },
+                      child: Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: InkWell(
+                          onTap: () => _toggleHabit(habit),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: habitColor.withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    isCompleted ? Icons.check : Icons.circle_outlined,
+                                    color: habitColor,
+                                    size: 28,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        habit.name,
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          decoration: isCompleted
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.local_fire_department,
-                                          size: 16,
-                                          color: streak > 0 ? Colors.orange : Colors.grey,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '$streak day streak',
-                                          style: TextStyle(
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.local_fire_department,
+                                            size: 16,
                                             color: streak > 0 ? Colors.orange : Colors.grey,
-                                            fontSize: 14,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '$streak day streak',
+                                            style: TextStyle(
+                                              color: streak > 0 ? Colors.orange : Colors.grey,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                isCompleted ? 'Done' : 'Tap to complete',
-                                style: TextStyle(
-                                  color: isCompleted ? Colors.green : Colors.grey,
-                                  fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
+                                Text(
+                                  isCompleted ? 'Done' : 'Tap to complete',
+                                  style: TextStyle(
+                                    color: isCompleted ? Colors.green : Colors.grey,
+                                    fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
